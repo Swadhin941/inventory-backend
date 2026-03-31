@@ -22,6 +22,8 @@ const authSchema = new mongoose.Schema({
     },
     contactNo: {
         type: String,
+        index: true,
+        unique: true
     },
     role: {
         type: String,
