@@ -2,7 +2,14 @@ const { app, cors, express, port } = require("./config/config");
 const userRouter = require("./router/auth/user.router");
 const { dbConfig } = require("./config/db");
 
-app.use(cors());
+app.use(
+    cors({
+        origin: "*",
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        // credentials: true, for any routes
+    }),
+);
 app.use(express.json());
 app.use("/auth", userRouter);
 
