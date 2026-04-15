@@ -1,1 +1,2 @@
-export const auth= "user";
+exports.auth= "user";
+exports.permission="permission"

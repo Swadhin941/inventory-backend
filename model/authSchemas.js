@@ -1,6 +1,5 @@
-import { auth } from "./db.declarartion";
-
 const { default: mongoose } = require("mongoose");
+const { auth } = require("./db.declarartion");
 
 const authSchema = new mongoose.Schema({
     username: {
@@ -14,7 +13,7 @@ const authSchema = new mongoose.Schema({
         required: [true, "Email is required"],
         unique: true,
         lowercase: true,
-        index: true
+        index: true,
     },
     password: {
         type: String,
@@ -23,7 +22,7 @@ const authSchema = new mongoose.Schema({
     contactNo: {
         type: String,
         index: true,
-        unique: true
+        unique: true,
     },
     role: {
         type: String,
@@ -43,4 +42,5 @@ const authSchema = new mongoose.Schema({
 
 authSchema.index({ role: 1, accountApproved: 1 });
 
-export const authModel = mongoose.model(auth, authSchema);
+const authModel = mongoose.model(auth, authSchema);
+module.exports = { authModel };

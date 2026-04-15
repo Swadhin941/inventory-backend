@@ -1,7 +1,10 @@
 const { app, cors, express, port } = require("./config/config");
+const userRouter = require("./router/auth/user.router");
+const { dbConfig } = require("./config/db");
 
 app.use(cors());
 app.use(express.json());
+app.use("/auth", userRouter);
 
 app.get("/health", (req, res) => {
     res.status(200).send({ message: "Healthy" });
@@ -15,6 +18,7 @@ app.use((err, req, res, next) => {
     res.status(500).send({ message: "Something went wrong!" });
 });
 
-app.listen(port, () => {
+app.listen(port, async () => {
     console.log("Listening on port ", port);
+    await dbConfig();
 });
