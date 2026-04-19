@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const {
     bcrypt,
     saltRounds,
@@ -26,11 +27,14 @@ const login = async (req, res) => {
         if (!passwordMatch) {
             return res.status(401).send({ message: "Wrong Password!" });
         }
+        if (findEmail.accountApproved === false) {
+            return res.status(401).send({ message: "Your account is not approved yet!", success: false });
+        }
 
         const tokenPayload = {
             username: findEmail.username,
             role: findEmail.role,
-            approvedStatus: findEmail.accountApproved,
+            accountApproved: findEmail.accountApproved,
             email: findEmail.email,
             userId: findEmail._id.toString(),
         };
@@ -39,9 +43,7 @@ const login = async (req, res) => {
 
         return res.status(200).send({
             success: true,
-            body: {
-                ...tokenPayload,
-            },
+            body: tokenPayload,
             token: tokenCreation,
         });
     } catch (err) {
@@ -105,7 +107,7 @@ const jwtToken = (tokenInfo) => {
 // Validate user information
 const validateInfo = async (req, res) => {
     try {
-        const userInfo = await authModel.findOne(
+        let userInfo = await authModel.findOne(
             { email: req.decoded.email },
             {
                 email: 1,
@@ -113,13 +115,18 @@ const validateInfo = async (req, res) => {
                 _id: 0,
                 role: 1,
                 accountApproved: 1,
-                createdAt: 0,
             },
         );
         if (!userInfo) {
             return res.status(404).send({ message: "User not found" });
         }
-        return res.status(200).send(userInfo);
+        if(userInfo.accountApproved === false){
+            return res.status(401).send({ message: "Your account is not approved yet!", success: false, body: null });
+        }
+        return res.status(200).send({
+            success: true,
+            body: userInfo,
+        });
     } catch (error) {
         return res.status(500).send({ message: error.message });
     }
@@ -127,11 +134,21 @@ const validateInfo = async (req, res) => {
 
 const allUserList = async (req, res) => {
     try {
+        const search = req.query.search || "All";
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
+        let findCondition = {};
+        if(search.toLowerCase()==="all"){
+            findCondition= {};
+        }
+        else{
+            findCondition= {
+                role: search
+            }
+        }
         const [user, total] = await Promise.all([
-            authModel.find({}, { password: 0 }).skip(skip).limit(limit),
+            authModel.find(findCondition, { password: 0 }).skip(skip).limit(limit),
             authModel.countDocuments(),
         ]);
         return res.status(200).send({
@@ -147,21 +164,89 @@ const allUserList = async (req, res) => {
 
 const userStatistics = async (req, res) => {
     try {
-        const [totalUserCount, activeUser, deactivate, admin]= Promise.all([
-            await authModel.find().countDocuments(),
-            await authModel.find({accountApproved: true}).countDocuments(),
-            await authModel.find({accountApproved: false}).countDocuments(),
-            await authModel.find({role: "Admin"}).countDocuments()
-        ])
+        const [totalUserCount, activeUser, deactivate, admin] =
+            await Promise.all([
+                authModel.find().countDocuments(),
+                authModel.find({ accountApproved: true }).countDocuments(),
+                authModel.find({ accountApproved: false }).countDocuments(),
+                authModel.find({ role: "Admin" }).countDocuments(),
+            ]);
+        // console.log(totalUserCount)
         return res.status(200).send({
-            totalUser: totalUserCount,
-            activeUser: activeUser,
-            deactivateUser: deactivate,
-            admin
-        })
+            success: true,
+            message: "User statistics loaded successfully",
+            body: {
+                totalUser: totalUserCount,
+                activeUser: activeUser,
+                deactivateUser: deactivate,
+                admin,
+            },
+        });
     } catch (error) {
-        return res.status(500).send({ message: error.message });
+        return res.status(500).send({ success: false, message: error.message });
     }
 };
 
-module.exports = { login, register, passwordUpdate, validateInfo, allUserList, userStatistics };
+const getAllRoles = (req, res) => {
+    try {
+        const roles = ["User", "Admin", "Manager", "Sales"];
+        return res.status(200).send({ success: true, body: roles });
+    } catch (error) {
+        return res.status(500).send({ success: false, message: error.message });
+    }
+};
+
+const updateUserInfo = async (req, res) => {
+    try {
+        if(req.decoded.email === req.body.email){
+            return res.status(403).send({message: "You can't update your own information", success: false, body: null})
+        }
+        const updateData = {
+            username: req.body.username,
+            contactNo: req.body.contactNo,
+            role: req.body.role,
+            accountApproved: req.body.accountApproved,
+        };
+        const filter = {
+            $and: [
+                { email: req.body.email },
+                { _id: new mongoose.Types.ObjectId(req.body._id) },
+            ],
+        };
+        const result = await authModel.updateOne(
+            filter,
+            { $set: updateData },
+            { upsert: false },
+        );
+        if (result.modifiedCount >= 1) {
+            return res
+                .status(200)
+                .send({
+                    success: true,
+                    message: "User information updated successfully",
+                    body: req.body,
+                });
+        } else {
+            return res
+                .status(200)
+                .send({
+                    success: true,
+                    message: "User information not updated",
+                    body: null,
+                });
+        }
+    } catch (error) {
+        return res.status(500).send({ success: false, message: error.message });
+    }
+};
+
+module.exports = {
+    login,
+    register,
+    passwordUpdate,
+    validateInfo,
+    allUserList,
+    userStatistics,
+    getAllRoles,
+    updateUserInfo,
+};

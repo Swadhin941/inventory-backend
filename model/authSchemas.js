@@ -31,7 +31,6 @@ const authSchema = new mongoose.Schema({
     },
     accountApproved: {
         type: Boolean,
-        required: [true, "Account approved is required"],
         default: false,
     },
     createdAt: {

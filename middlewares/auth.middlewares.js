@@ -1,7 +1,6 @@
 const { jwt, access_token } = require("../config/config");
 
 const verifyJWT = (req, res, next) => {
-    console.log(req.headers.authorization);
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
