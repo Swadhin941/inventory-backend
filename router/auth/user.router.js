@@ -27,12 +27,13 @@ userRouter.post(
 );
 
 userRouter.get("/validate-info", verifyJWT, validateInfo);
-userRouter.get("/all-list", allUserList);
-userRouter.get("/user-statistics", userStatistics);
-userRouter.get("/get-all-roles", getAllRoles);
+userRouter.get("/all-list",verifyJWT, allUserList);
+userRouter.get("/user-statistics",verifyJWT, userStatistics);
+userRouter.get("/get-all-roles",verifyJWT, getAllRoles);
 userRouter.put(
     "/update-user-info",
     runValidation(authValidatorSchema.updateUserInfoSchema),
+    verifyJWT,
     updateUserInfo,
 );
 
