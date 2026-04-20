@@ -1,6 +1,7 @@
 const { app, cors, express, port } = require("./config/config");
 const userRouter = require("./router/auth/user.router");
 const { dbConfig } = require("./config/db");
+const productRouter = require("./router/product/product.router");
 
 app.use(
     cors({
@@ -12,6 +13,7 @@ app.use(
 );
 app.use(express.json());
 app.use("/auth", userRouter);
+app.use("/product", productRouter);
 
 app.get("/health", (req, res) => {
     res.status(200).send({ message: "Healthy" });
