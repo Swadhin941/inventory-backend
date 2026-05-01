@@ -5,7 +5,7 @@ const { productValidatorSchema } = require("../../validators/product.validator")
 const productRouter = express.Router();
 
 productRouter.post("/add-brand",runValidation(productValidatorSchema.addBrandSchema), addBrand);
-productRouter.get("/all-brand", getAllBrand);
+productRouter.get("/get-all-brand", getAllBrand);
 productRouter.put("/update-brand", updateBrand);
 
 module.exports = productRouter;
