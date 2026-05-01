@@ -6,6 +6,6 @@ const productRouter = express.Router();
 
 productRouter.post("/add-brand",runValidation(productValidatorSchema.addBrandSchema), addBrand);
 productRouter.get("/get-all-brand", getAllBrand);
-productRouter.put("/update-brand", updateBrand);
+productRouter.put("/update-brand", runValidation(productValidatorSchema.updateBrandSchema), updateBrand);
 
 module.exports = productRouter;

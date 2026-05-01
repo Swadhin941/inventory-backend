@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const { brandModel } = require("../../model/brandSchema");
 
 const addBrand = async (req, res) => {
@@ -10,13 +11,11 @@ const addBrand = async (req, res) => {
                 .send({ message: "Brand already exists", success: false });
         }
         const newBrand = await brandModel.insertOne({ brand: req.body.brand });
-        return res
-            .status(201)
-            .send({
-                message: "Brand added successfully",
-                success: true,
-                body: newBrand,
-            });
+        return res.status(201).send({
+            message: "Brand added successfully",
+            success: true,
+            body: newBrand,
+        });
     } catch (error) {
         return res.status(500).send({ message: error.message, success: false });
     }
@@ -31,23 +30,60 @@ const getAllBrand = async (req, res) => {
             brandModel.find().skip(skip).limit(limit),
             brandModel.countDocuments(),
         ]);
-        return res
-            .status(200)
-            .send({
-                success: true,
-                message: "Brand loaded successfully",
-                totalCount: total,
-                body: brand,
-            });
+        return res.status(200).send({
+            success: true,
+            message: "Brand loaded successfully",
+            totalCount: total,
+            body: brand,
+        });
     } catch (error) {
         return res.status(500).send({ message: error.message, success: false });
     }
 };
 
+
 const updateBrand = async (req, res) => {
     try {
+        const { brandName, brandId } = req.body;
+
+        const findBrand = await brandModel.findOne({
+            brand: brandName,
+            _id: { $ne: brandId },
+        });
+
+        if (findBrand) {
+            return res.status(400).send({
+                message: "Brand already exists",
+                success: false,
+            });
+        }
+
+        const result = await brandModel.updateOne(
+            { _id: brandId },
+            { $set: { brand: brandName } },
+            { upsert: false },
+        );
+
+        if (result.modifiedCount >= 1) {
+            return res.status(200).send({
+                message: "Updated successfully",
+                success: true,
+                body: {
+                    _id: brandId,
+                    brand: brandName,
+                }
+            });
+        }
+
+        return res.status(404).send({
+            message: "Brand not found or not updated",
+            success: false,
+        });
     } catch (error) {
-        return res.status(500).send({ message: error.message, success: false });
+        return res.status(500).send({
+            message: error.message,
+            success: false,
+        });
     }
 };
 

@@ -8,7 +8,12 @@ const productValidatorSchema= {
     addModelSchema: Joi.object({
         brandId: Joi.string().trim().min(8).required(),
         model: Joi.string().trim().min(2).required()
-    })
+    }),
+
+    updateBrandSchema: Joi.object({
+        brandId: Joi.string().trim().min(8).required(),
+        brandName: Joi.string().trim().min(2).required()
+    }),
 
 }
 
